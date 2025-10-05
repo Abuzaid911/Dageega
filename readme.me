@@ -1,0 +1,16 @@
+# 1 Minute | دقيقة واحدة
+
+## Install & Run
+- `cd one-minute`
+- `npm install`
+- `npm run dev` (Next.js dev server on http://localhost:3000)
+
+## Editing Mock Data
+- Update `src/app/api/posts/route.ts` to tweak categories, regions, or media.
+- Keep `publishedAt` sorted newest-first and add new posts to the `RAW_POSTS` array.
+- Use `lang: 'both'` for stories suitable for both languages.
+
+## Connecting A Real Backend
+1. Replace `/app/api/posts/route.ts` with fetches to your news API (REST/GraphQL).
+2. Map backend payloads to the `Post` type; keep fields consistent with the UI.
+3. Introduce ISR or streaming if the backend is slow; adjust `useInfinitePosts` to hit the new endpoint.

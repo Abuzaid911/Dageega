@@ -1,0 +1,31 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  @apply min-h-screen bg-white text-charcoal font-sans antialiased;
+}
+
+a {
+  @apply text-olive underline underline-offset-4 transition-colors;
+}
+
+a:hover {
+  @apply text-charcoal;
+}
+
+button,
+[role='button'],
+input,
+select,
+textarea {
+  @apply focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-olive;
+}
+
+::selection {
+  background-color: rgba(59, 93, 59, 0.3);
+}
