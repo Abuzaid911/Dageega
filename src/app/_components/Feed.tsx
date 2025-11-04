@@ -94,7 +94,7 @@ const Feed = ({ onUpdated }: { onUpdated: (date: Date) => void }) => {
       }
 
       const next = params.toString();
-      router.replace(next ? `${pathname}?${next}` : pathname, { scroll: false });
+      router.replace((next ? `${pathname}?${next}` : pathname) as any, { scroll: false });
     },
     [pathname, router, searchParams]
   );

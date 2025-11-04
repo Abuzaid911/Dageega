@@ -203,6 +203,7 @@ export async function GET(request: NextRequest) {
       posts = posts.filter((post) =>
         post.tags.some((tag) => {
           const normalizedPostTag = normalize(tag);
+          if (!normalizedPostTag) return false;
           // Exact match
           if (normalizedPostTag === normalizedTag) return true;
           // Handle variations like "Blue Nile" vs "bluenile" or "blue-nile"
