@@ -15,14 +15,16 @@ const LanguageToggle = () => {
   );
 
   return (
-    <div className="inline-flex items-center overflow-hidden rounded-full border border-warmgray bg-white shadow-sm">
+    <div className="inline-flex items-center overflow-hidden rounded-full border-2 border-warmgray/60 bg-white shadow-sm">
       <button
         type="button"
         aria-label="Switch to English"
         aria-pressed={lang === 'en'}
         onClick={() => handleSelect('en')}
-        className={`px-3 py-1 text-sm font-medium transition-colors ${
-          lang === 'en' ? 'bg-olive text-white' : 'text-charcoal/80 hover:bg-warmgray/60'
+        className={`px-4 py-1.5 text-sm font-semibold transition-all duration-200 ${
+          lang === 'en'
+            ? 'bg-gradient-to-r from-olive to-olive/90 text-white shadow-md'
+            : 'text-charcoal/70 hover:bg-olive/5 hover:text-olive'
         }`}
       >
         EN
@@ -32,8 +34,10 @@ const LanguageToggle = () => {
         aria-label="التبديل إلى العربية"
         aria-pressed={lang === 'ar'}
         onClick={() => handleSelect('ar')}
-        className={`px-3 py-1 text-sm font-medium transition-colors ${
-          lang === 'ar' ? 'bg-olive text-white' : 'text-charcoal/80 hover:bg-warmgray/60'
+        className={`px-4 py-1.5 text-sm font-semibold transition-all duration-200 ${
+          lang === 'ar'
+            ? 'bg-gradient-to-r from-olive to-olive/90 text-white shadow-md'
+            : 'text-charcoal/70 hover:bg-olive/5 hover:text-olive'
         }`}
       >
         AR

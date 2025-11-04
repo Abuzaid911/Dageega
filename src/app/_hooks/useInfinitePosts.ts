@@ -30,19 +30,28 @@ export const useInfinitePosts = ({ lang, tag, query, pageSize = 12 }: UseInfinit
   const [lastFetchedAt, setLastFetchedAt] = useState<Date | null>(null);
 
   const abortRef = useRef<AbortController | null>(null);
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const fetchPage = useCallback(
-    async (offset: number, append: boolean) => {
-      abortRef.current?.abort();
+    async (offset: number, append: boolean, isPolling = false) => {
+      // Don't abort if this is a polling request (silent update)
+      if (!isPolling) {
+        abortRef.current?.abort();
+      }
       const controller = new AbortController();
-      abortRef.current = controller;
+      if (!isPolling) {
+        abortRef.current = controller;
+      }
 
       setError(null);
-      if (append) {
-        setIsFetchingMore(true);
-      } else {
-        setIsLoading(true);
-        setPosts([]);
+      // Don't show loading state for polling updates
+      if (!isPolling) {
+        if (append) {
+          setIsFetchingMore(true);
+        } else {
+          setIsLoading(true);
+          setPosts([]);
+        }
       }
 
       try {
@@ -62,31 +71,95 @@ export const useInfinitePosts = ({ lang, tag, query, pageSize = 12 }: UseInfinit
           throw new Error('Failed to fetch posts');
         }
         const payload = (await response.json()) as ApiResponse;
-        setPosts((prev) => (append ? [...prev, ...payload.data] : payload.data));
+        
+        // For polling, only update if we're on the first page and not appending
+        if (isPolling && offset === 0 && !append) {
+          setPosts(payload.data);
+        } else {
+          setPosts((prev) => (append ? [...prev, ...payload.data] : payload.data));
+        }
         setHasMore(payload.hasMore);
         setLastFetchedAt(new Date());
       } catch (err) {
         if ((err as Error).name === 'AbortError') {
           return;
         }
-        setError(err as Error);
+        // Only set error for non-polling requests
+        if (!isPolling) {
+          setError(err as Error);
+        }
       } finally {
-        if (append) {
-          setIsFetchingMore(false);
-        } else {
-          setIsLoading(false);
+        if (!isPolling) {
+          if (append) {
+            setIsFetchingMore(false);
+          } else {
+            setIsLoading(false);
+          }
         }
       }
     },
     [lang, pageSize, query, tag]
   );
 
+  // Initial fetch
   useEffect(() => {
     fetchPage(0, false);
     return () => {
       abortRef.current?.abort();
     };
   }, [fetchPage]);
+
+  // Polling: fetch every 1 minute (only when page is visible)
+  useEffect(() => {
+    // Clear any existing interval
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current);
+    }
+
+    const startPolling = () => {
+      // Set up polling interval (60 seconds = 1 minute)
+      pollingIntervalRef.current = setInterval(() => {
+        // Only poll if page is visible and not currently loading
+        if (document.visibilityState === 'visible' && !isLoading && !isFetchingMore) {
+          fetchPage(0, false, true);
+        }
+      }, 60000); // 60000ms = 1 minute
+    };
+
+    // Start polling if page is visible
+    if (document.visibilityState === 'visible') {
+      startPolling();
+    }
+
+    // Handle visibility change (pause/resume polling)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        // Page became visible, start polling
+        startPolling();
+        // Also fetch immediately when page becomes visible
+        if (!isLoading && !isFetchingMore) {
+          fetchPage(0, false, true);
+        }
+      } else {
+        // Page became hidden, stop polling
+        if (pollingIntervalRef.current) {
+          clearInterval(pollingIntervalRef.current);
+          pollingIntervalRef.current = null;
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    // Cleanup on unmount or when dependencies change
+    return () => {
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+        pollingIntervalRef.current = null;
+      }
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [fetchPage, isLoading, isFetchingMore]);
 
   const loadMore = useCallback(() => {
     if (!hasMore || isFetchingMore || isLoading) return;
